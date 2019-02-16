@@ -1,6 +1,7 @@
 from __future__ import annotations
 from collections import deque
 from typing import List
+import numpy as np
 import random
 
 class Face(object):
@@ -17,51 +18,53 @@ class Face(object):
 			self.location.rotate()
 			self.grid = [list(a) for a in zip(*self.grid[::-1])]
 
-
-	def find_line(self, pos):
-		return [self.grid[i][pos] for i in range(3)]
-
-
 	def set_as_top(self, top):
 		while self.location[0] != top:
 			self.location.rotate()
 			self.grid = [list(a) for a in zip(*self.grid[::-1])]
+
+	def set_as_right(self, right):
+		while self.location[1] != right:
+			self.location.rotate()
+			self.grid = [list(a) for a in zip(*self.grid[::-1])]
+
+	def set_as_left(self, left):
+		while self.location[3] != left:
+			self.location.rotate()
+			self.grid = [list(a) for a in zip(*self.grid[::-1])]
+
+	def find_line(self, pos):
+		return [self.grid[i][pos] for i in range(3)]
 
 
 	def replace_line(self, line, pos):
 		for ind, colour in enumerate(line):
 			self.grid[ind][pos] = colour 
 
-
-	def rotate_clockwise(self):
-		# self.grid = [list(a) for a in zip(*self.grid[::-1])]
-		self.location.rotate()
-		# self.grid = [list(a) for a in zip(*self.grid[::-1])]
-
-
-	def rotate_counter_clockwise(self):
-		self.location.rotate(-1)
-		# self.grid = [[b[i] for b in self.grid] for i in range(2, -1 ,-1)]
-
-
 	def rotate(self, direction, start):
 		self.set_as_top(direction)
 		if start == self.location[3]:
-			self.rotate_counter_clockwise()
+			self.location.rotate(-1)
 
 		elif start == self.location[1]:
-			self.rotate_clockwise()
+			self.location.rotate()
+
+	def __str__(self):
+		a = ''
+		for i in self.grid:
+			a += str(i) + '\n'
+		return a.strip()
 
 
 class Rubiks_Cube(object):
 	def __init__(self, items: List[Face]=None):
 		if items:
-			self.rubiks = {}
+			self.faces = {}
 			for face in items:
-				self.rubiks[face.colour, face]
+				self.faces[face.colour, face]
 
 		else:
-			self.rubiks = {
+			self.faces = {
 				'R' : Face('Y', 'G', 'W', 'B', 'R'),
 				'B' : Face('Y', 'R', 'W', 'O', 'B'),
 				'O' : Face('Y', 'B', 'W', 'G', 'O'),
@@ -74,7 +77,7 @@ class Rubiks_Cube(object):
 	def rotate(self, colour, direction, pos):
 		start = colour
 		currcolour = colour
-		face = self.rubiks[currcolour]
+		face = self.faces[currcolour]
 		face.set_as_top(direction)
 		currline = face.find_line(pos)
 		newcolour = face.location[0]
@@ -84,14 +87,15 @@ class Rubiks_Cube(object):
 		# if left is colour flip clockwise
 
 		if pos == 2:
-			side = self.rubiks[face.location[1]]
+			side = self.faces[face.location[1]]
 			side.rotate(newcolour, currcolour)
+
 		elif pos == 0:
-			side = self.rubiks[face.location[3]]
+			side = self.faces[face.location[3]]
 			side.rotate(newcolour, currcolour)
 
 		while newcolour != start:
-			newface = self.rubiks[newcolour]
+			newface = self.faces[newcolour]
 			newface.set_as_bottom(currcolour)
 			newline = newface.find_line(pos)
 			newface.replace_line(currline, pos)
@@ -99,55 +103,14 @@ class Rubiks_Cube(object):
 			currcolour = newcolour
 			newcolour = newface.location[0]
 
-		self.rubiks[start].replace_line(currline, pos)
+		self.faces[start].replace_line(currline, pos)
 
-
-	def right_alg(self, colour, direction):
-		start = self.rubiks[colour]
-		start.set_as_top(direction)
-		self.rotate(colour, start.location[0], 2)
-		self.rotate(colour, start.location[3], 2)
-		self.rotate(colour, start.location[2], 0)
-		self.rotate(colour, start.location[1], 0)
-
-	def left_alg(self, colour, direction):
-		start = self.rubiks[colour]
-		start.set_as_top(direction)
-		self.rotate(colour, start.location[0], 0)
-		self.rotate(colour, start.location[1], 0)
-		self.rotate(colour, start.location[2], 2)
-		self.rotate(colour, start.location[3], 2)
-
-	def locate_side(self, colour, side1=None):
-		temp = []
-		for face in self.rubiks.values():
-			if face.grid[0][1] == colour:
-				temp.append((face.colour, self.rubiks[face.colour].location[0]))
-
-			if face.grid[1][0] == colour:
-				temp.append((face.colour, self.rubiks[face.colour].location[3]))
-
-			if face.grid[1][2] == colour:
-				temp.append((face.colour, self.rubiks[face.colour].location[1]))
-
-			if face.grid[2][1] == colour:
-				temp.append((face.colour, self.rubiks[face.colour].location[2]))
-
-		location = temp
-		if side1:
-			location = []
-			for block in temp:
-				self.rubiks[block[0]].set_as_top(block[1]) 
-				self.rubiks[block[1]].set_as_top(block[0])
-				if self.rubiks[block[0]].grid[0][1] in [colour, side1] and \
-				   self.rubiks[block[1]].grid[0][1] in [colour, side1]:
-					location.append(block)
-					break
-
-		return location
-
-	def locate_corner(self, colour, side1=None, side2=None):
-		pass
+	def rotate_face(self, colour, times=1, CLC=0):
+		a = self.faces[self.faces[colour].location[0]]
+		while times != 0:
+			[a.set_as_right, a.set_as_left][CLC](colour)
+			self.rotate(a.colour, a.location[0], [2, 0][CLC])
+			times -= 1
 
 
 	def scramble(self):
@@ -155,38 +118,42 @@ class Rubiks_Cube(object):
 			colours = 'RGBYOW'
 			position = [0, 2]
 			colour1 = random.choice(colours)
-			colour2 = random.choice(self.rubiks[colour1].location)
+			colour2 = random.choice(self.faces[colour1].location)
 			randpos = random.choice(position)
 
 			self.rotate(colour1, colour2, randpos)
 
 	def __str__(self):
-		string = ''
-		for i in self.rubiks:
-			string += str(self.rubiks[i].location) + '\n'
-			for b in self.rubiks[i].grid:
-				string += str(b) + '\n'
-		return string
-	
+		rows = ['' for i in range(9)]
+		for i in 'YBRGOW':
+			if i == 'Y':
+				self.faces[i].set_as_top('O')
+				for ind, i in enumerate(str(self.faces[i]).split('\n')):
+					rows[ind] += (' '*15 + i + ' '*30)
 
+			elif i in 'RGOB':
+				self.faces[i].set_as_top('Y')
+				for ind, i in enumerate(str(self.faces[i]).split('\n')):
+					rows[ind + 3] += i
 
+			else:
+				self.faces[i].set_as_top('R')
+				for ind, i in enumerate(str(self.faces[i]).split('\n')):
+					rows[ind + 6] += (' '*15 + i + ' '*30)
+
+		return '\n'.join(rows)
 
 
 if __name__ == '__main__':
 	import time
 	rubik = Rubiks_Cube()
-	rubik.scramble()
-	
-	# print(rubik)
-	# rubik.rotate('R', 'Y', 2)
-	# print(rubik)
-	# rubik.rotate('R', 'B', 2)
-	# print(rubik)
-	# rubik.rotate('R', 'W', 0)
-	# print(rubik)
-	# rubik.rotate('R', 'G', 0)
-	# print(rubik)
+	# print(rubik.faces['R'])
+	# rubik.scramble()
+	# rubik.right_alg('R', 'Y')
+	rubik.rotate_face('R')
+	rubik.rotate_face('R', 1)
 
+	print(rubik)
 
 	# test = Face('Y', 'G', 'W', 'B', 'R')
 	# test.grid = [['R', 'R', 'W'], ['R', 'R', 'W'], ['R', 'R', 'W']]
