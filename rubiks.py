@@ -55,6 +55,13 @@ class Face(object):
 			a += str(i) + '\n'
 		return a.strip()
 
+	def get_visualizer_string(self):
+		a = ''
+		for i in range(3):
+			for b in reversed(range(3)):
+				a += self.grid[i][b]
+
+		return a
 
 class Rubiks_Cube(object):
 	def __init__(self, items: List[Face]=None):
@@ -105,15 +112,24 @@ class Rubiks_Cube(object):
 
 		self.faces[start].replace_line(currline, pos)
 
-	def rotate_face(self, colour, times=1, CLC=0):
+
+		return 1, [[colour, direction, pos]]
+
+	def rotate_face(self, colour, times=1, CLC=0) -> tuple[int, List[List[str, str, int]]]:
+		rotation = []
+		val = times
 		a = self.faces[self.faces[colour].location[0]]
 		while times != 0:
 			[a.set_as_right, a.set_as_left][CLC](colour)
 			self.rotate(a.colour, a.location[0], [2, 0][CLC])
+			rotation.append([a.colour, a.location[0], [2, 0][CLC]])
 			times -= 1
+
+		return val, rotation
 
 
 	def scramble(self):
+		rotation = []
 		for i in range(100):
 			colours = 'RGBYOW'
 			position = [0, 2]
@@ -121,7 +137,10 @@ class Rubiks_Cube(object):
 			colour2 = random.choice(self.faces[colour1].location)
 			randpos = random.choice(position)
 
+			rotation.append([colour1, colour2, randpos])
 			self.rotate(colour1, colour2, randpos)
+
+		return rotation
 
 	def __str__(self):
 		rows = ['' for i in range(9)]
@@ -143,6 +162,23 @@ class Rubiks_Cube(object):
 
 		return '\n'.join(rows)
 
+	def visualizer_string(self):
+		faces = {}
+		for i in 'YBRGOW':
+			if i == 'Y':
+				self.faces[i].set_as_top('O')
+				faces[i] = self.faces[i].get_visualizer_string()
+
+			elif i in 'RGOB':
+				self.faces[i].set_as_top('Y')
+				faces[i] = self.faces[i].get_visualizer_string()
+
+			else:
+				self.faces[i].set_as_top('R')
+				faces[i] = self.faces[i].get_visualizer_string()
+
+		return faces
+
 
 if __name__ == '__main__':
 	import time
@@ -151,7 +187,7 @@ if __name__ == '__main__':
 	# rubik.scramble()
 	# rubik.right_alg('R', 'Y')
 	rubik.rotate_face('R')
-	rubik.rotate_face('R', 1)
+	# rubik.rotate_face('R', 1)
 
 	print(rubik)
 
