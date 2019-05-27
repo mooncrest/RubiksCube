@@ -2,9 +2,6 @@ from rubiks import Rubiks_Cube
 from typing import List, Any
 
 class Solution(Rubiks_Cube):
-    def __init__(self, faces):
-        self.faces = faces
-
     def locate_side(self, colour, side1=None):
         temp = []
         for face in self.faces.values():
@@ -616,10 +613,51 @@ class Solution(Rubiks_Cube):
         """turn every starting rotation point to be R, B, W"""
         pass
 
+    def Solve(self):
+        faces = self.copy()
+        # print(self.faces['R'].location)
+        # print(faces['R'].location)
+        total = float('inf')
+        rotations = []
+        for colour in 'RGYOBW':
+            curr_steps, curr_rot = 0, []
+            steps = self.Cross(colour)
+            curr_rot += steps[1]
+            curr_steps += steps[0]
+            steps = self.Corners(colour)
+            curr_rot += steps[1]
+            curr_steps += steps[0]
+            steps = self.Fix_sides(colour)
+            curr_rot += steps[1]
+            curr_steps += steps[0]
+            steps = self.Top_cross(colour)
+            curr_rot += steps[1]
+            curr_steps += steps[0]
+            steps = self.Top_corners(colour)
+            curr_rot += steps[1]
+            curr_steps += steps[0]
+            steps = self.Invert(colour)
+            curr_rot += steps[1]
+            curr_steps += steps[0]
+            steps = self.Top_corners(colour)
+            curr_rot += steps[1]
+            curr_steps += steps[0]
+            steps = self.Final_Solve(colour)
+            curr_rot += steps[1]
+            curr_steps += steps[0]
+            self.faces = {key: item.copy() for key, item in faces.items()}
+            # print(self.faces)
+            if curr_steps < total:
+                total, rotations = curr_steps, curr_rot
+                # print(rotations)
+        return total, rotations
+
+
+
 if __name__ == '__main__':
     import time
     start = time.time()
-    a = Solution(Rubiks_Cube().faces)
+    a = Solution()
 
     # fixed_scramble = [['W', 'O', 2], ['W', 'G', 0], ['R', 'B', 0], ['B', 'Y', 0], ['W', 'G', 0], ['Y', 'O', 0], ['G', 'O', 2], ['B', 'W', 0], ['G', 'Y', 0], ['O', 'G', 2], ['B', 'O', 2], ['O', 'G', 0], ['Y', 'G', 2], ['O', 'Y', 2], ['W', 'R', 2], ['G', 'O', 2], ['O', 'W', 2], ['B', 'O', 0], ['G', 'Y', 2], ['G', 'O', 0], ['R', 'G', 0], ['G', 'R', 0], ['G', 'W', 0], ['Y', 'B', 0], ['W', 'B', 2], ['W', 'G', 0], ['B', 'O', 2], ['R', 'B', 0], ['B', 'O', 0], ['B', 'W', 2], ['B', 'W', 0], ['Y', 'G', 2], ['W', 'B', 2], ['Y', 'B', 0], ['O', 'B', 0], ['G', 'W', 0], ['B', 'Y', 0], ['R', 'Y', 0], ['O', 'G', 0], ['W', 'G', 0], ['G', 'W', 2], ['B', 'O', 2], ['O', 'W', 0], ['W', 'O', 2], ['O', 'G', 0], ['W', 'O', 0], ['G', 'Y', 2], ['Y', 'B', 2], ['O', 'G', 2], ['G', 'Y', 0], ['R', 'B', 0], ['G', 'Y', 2], ['Y', 'R', 0], ['R', 'G', 0], ['W', 'B', 2], ['Y', 'B', 2], ['Y', 'O', 0], ['Y', 'O', 0], ['Y', 'G', 0], ['B', 'W', 2], ['Y', 'G', 0], ['R', 'G', 0], ['B', 'R', 2], ['Y', 'R', 2], ['R', 'Y', 0], ['W', 'O', 0], ['R', 'Y', 0], ['Y', 'R', 2], ['B', 'O', 2], ['Y', 'B', 2], ['O', 'Y', 2], ['B', 'R', 0], ['B', 'O', 0], ['Y', 'B', 2], ['Y', 'R', 0], ['R', 'Y', 2], ['O', 'W', 0], ['B', 'R', 0], ['O', 'G', 2], ['Y', 'G', 0], ['O', 'W', 0], ['B', 'O', 2], ['G', 'Y', 0], ['B', 'R', 2], ['O', 'W', 0], ['W', 'R', 2], ['G', 'W', 0], ['W', 'B', 2], ['G', 'O', 2], ['R', 'B', 2], ['R', 'G', 0], ['G', 'R', 0], ['O', 'Y', 0], ['Y', 'B', 2], ['B', 'R', 0], ['B', 'O', 0], ['Y', 'O', 0], ['B', 'O', 2], ['G', 'R', 0], ['R', 'G', 0]]
     # for i in fixed_scramble:
@@ -627,7 +665,7 @@ if __name__ == '__main__':
     total = 0
     for COLOUR in 'RGWYBO':
         for i in range(500):
-            a.scramble()
+            a.Scramble()
             total += a.Cross(COLOUR)[0]
             total += a.Corners(COLOUR)[0]
             total += a.Fix_sides(COLOUR)[0]
