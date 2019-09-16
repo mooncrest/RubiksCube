@@ -1,10 +1,7 @@
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import numpy as np
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
-from matplotlib.widgets import Slider, Button, RadioButtons
-import matplotlib.patches as patches
-from rubiks import *
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+# from matplotlib.widgets import Slider, Button, RadioButtons
 from solution import Solution
 STEPS = 4
 
@@ -62,68 +59,9 @@ def rotation():
                     poly[1][ind] = np.matmul(vert, rot) 
                 poly[0].set_verts([poly[1]])
 
-    # rot = Y_rotation_matrix(-10)
-    # for cube in poly3d_objects:
-    #     if any(3 == vert[1] for poly in cube for vert in poly[1]):
-    #         for poly in cube:
-    #             for ind, vert in enumerate(poly[1]):
-    #                 poly[1][ind] = np.matmul(vert, rot) 
-    #             poly[0].set_verts([poly[1]])
     fig.canvas.draw_idle()    
     return True
 
-def parse_rotation(rotations, STEPS=STEPS):
-    parsed = []
-    for rot in rotations:
-        if rot[0] + rot[1] in 'RYOWR':
-            if rot[2] == 0:
-                # vert[1] == -3 inverted rotation Y
-                parsed.extend([['Y', 1, 3, -STEPS]] * STEPS)
-            elif rot[2] == 2: 
-                # vert[1] == 3 inverted rotation Y
-                parsed.extend([['Y', 1, -3, -STEPS]] * STEPS)
-
-        elif rot[0] + rot[1] in 'BYGWB':
-            if rot[2] == 0:
-                # vert[0] == 3 inverted rotation X
-                parsed.extend([['X', 0, -3, -STEPS]] * STEPS)
-            elif rot[2] == 2: 
-                # vert[0] == -3 inverted rotation X
-                parsed.extend([['X', 0, 3, -STEPS]] * STEPS)
-
-        elif rot[0] + rot[1] in 'RBOGR':
-            if rot[2] == 0:
-                # vert[2] == 3 inverted rotation Z
-                parsed.extend([['Z', 2, 3, -STEPS]] * STEPS)
-
-            elif rot[2] == 2: 
-                # vert[2] == - 3 inverted rotation Z
-                parsed.extend([['Z', 2, -3, -STEPS]] * STEPS)
-
-        elif rot[0] + rot[1] in 'RWOYR':
-            if rot[2] == 0:
-                # vert[1] == -3 original rotation Y
-                parsed.extend([['Y', 1, -3, STEPS]] * STEPS)
-                
-            elif rot[2] == 2: 
-                # vert[1] == 3 original rotation Y
-                parsed.extend([['Y', 1, 3, STEPS]] * STEPS)
-
-        elif rot[0] + rot[1] in 'BWGYB':
-            if rot[2] == 0:
-                # vert[0] == 3 original rotation X
-                parsed.extend([['X', 0, 3, STEPS]] * STEPS)
-            elif rot[2] == 2: 
-                # vert[0] == -3 original rotation X
-                parsed.extend([['X', 0, -3, STEPS]] * STEPS)
-        elif rot[0] + rot[1] in 'RGOBR':
-            if rot[2] == 0:
-                # vert[2] == 3 original rotation Z
-                parsed.extend([['Z', 2, -3, STEPS]] * STEPS)
-            elif rot[2] == 2: 
-                # vert[2] == -3 original rotation Z
-                parsed.extend([['Z', 2, 3, STEPS]] * STEPS)
-    return parsed[::-1]
 
 ax.set_aspect('equal')
 ax.set_xlim3d(-3, 3)
@@ -134,13 +72,10 @@ plt.axis('off')
 # RIGHT_ALG = [['W', 'R', 2], ['W', 'B', 2], ['W', 'O', 0], ['W', 'G', 0]]
 CUBE = Solution()
 SCRAMBLE = CUBE.Scramble()
-ROTATION_ORDER = parse_rotation(SCRAMBLE, 1)
-# print(ROTATION_ORDER)
-while rotation():
-    pass
-STEPS, ROTATIONS = CUBE.Solve()
-print(STEPS)
-ROTATION_ORDER = parse_rotation(ROTATIONS)
+SCRAMBLE = CUBE.parse_rotation(SCRAMBLE, 1)
+ROTATIONS = CUBE.Solve()
+print(len(ROTATIONS))
+ROTATION_ORDER = CUBE.parse_rotation(ROTATIONS, STEPS) + SCRAMBLE
 timer = fig.canvas.new_timer(interval=50)
 timer.add_callback(rotation)
 timer.start()

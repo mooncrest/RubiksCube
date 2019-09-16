@@ -116,7 +116,7 @@ class Rubiks_Cube(object):
         self.faces[start].replace_line(currline, pos)
 
 
-        return 1, [[colour, direction, pos]]
+        return [[colour, direction, pos]]
 
     def rotate_face(self, colour, times=1, CLC=0) -> tuple[int, List[List[str, str, int]]]:
         rotation = []
@@ -124,11 +124,10 @@ class Rubiks_Cube(object):
         a = self.faces[self.faces[colour].location[0]]
         while times != 0:
             [a.set_as_right, a.set_as_left][CLC](colour)
-            self.rotate(a.colour, a.location[0], [2, 0][CLC])
-            rotation.append([a.colour, a.location[0], [2, 0][CLC]])
+            rotation += self.rotate(a.colour, a.location[0], [2, 0][CLC])
             times -= 1
 
-        return val, rotation
+        return rotation
 
 
     def Scramble(self):
