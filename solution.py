@@ -3,6 +3,11 @@ from typing import List, Any
 
 class Solution(Rubiks_Cube):
     def locate_side(self, colour, side1=None):
+        ''' returns a list of tuples where the colour is located to side1 
+        if side1 is not defined returns all pieces where the edge is colour.
+
+        the tuple (a, b) implies colour is on face a and side1 is on face b
+        '''
         temp = []
         for face in self.faces.values():
             if face.grid[0][1] == colour:
@@ -18,7 +23,8 @@ class Solution(Rubiks_Cube):
                 temp.append((face.colour, self.faces[face.colour].location[2]))
 
         location = temp
-        if side1:
+
+        if side1 is not None:
             location = []
             for block in temp:
                 self.faces[block[0]].set_as_top(block[1]) 
@@ -31,6 +37,16 @@ class Solution(Rubiks_Cube):
         return location
 
     def locate_corner(self, colour, side1=None, side2=None):
+        ''' returns a list of tuples where the colour is located to side1 and side2
+
+        if side2 is defined side1 has to be defined and side 1 can be defined by it self
+
+        if side1 is not defined returns all pieces where the edge is colour.
+
+        the tuple (a, b, c) implies colour is on face a and side1 is on face b 
+        and side2 is on face c.
+        '''
+        # checks for faces containing colour
         temp = []
         for face in self.faces.values():
             for a, b, c in zip([0, 0, 2, 2], [0, 2, 0, 2], [(3, 0), (0, 1), (2, 3), (1, 2)]):
@@ -40,7 +56,8 @@ class Solution(Rubiks_Cube):
                     colour3 = face.location[c[1]] # set as left
                     temp.append((colour1, colour2, colour3))
 
-        if side1:
+        # checks side 1
+        if side1 is not None:
             cleaned = []
             for center, top, right in temp:
                 self.faces[top].set_as_right(center)
@@ -51,7 +68,8 @@ class Solution(Rubiks_Cube):
                     cleaned.append((center, top, right))
             temp = cleaned
 
-        if side2:
+        # checks side 2
+        if side2 is not None:
             cleaned = []
             for center, top, right in temp:
                 self.faces[top].set_as_right(center)
@@ -66,6 +84,9 @@ class Solution(Rubiks_Cube):
 
 
     def right_alg(self, colour, direction):
+        ''' preform a right algorithm this is just a specific set of rotations
+        the algorithm is done facing the face colour with top face direction.
+        ''' 
         start = self.faces[colour]
         start.set_as_top(direction)
         sides = [i for i in start.location]
@@ -80,6 +101,9 @@ class Solution(Rubiks_Cube):
 
 
     def left_alg(self, colour, direction):
+        ''' preform a left algorithm this is just a specific set of rotations
+        the algorithm is done facing the face colour with top face direction.
+        ''' 
         start = self.faces[colour]
         start.set_as_top(direction)
         sides = [i for i in start.location]
@@ -208,6 +232,9 @@ class Solution(Rubiks_Cube):
         return rotations
 
     def Fix_sides(self, colour):
+        ''' rotates the top into the correct position for the begginer pattern
+        the preforms a left and right algorithm to slide the piece in
+        '''
         side1 = self.faces[colour].location.copy()
         self.faces[colour].location.rotate()
         side2 = self.faces[colour].location.copy()
@@ -252,7 +279,6 @@ class Solution(Rubiks_Cube):
         while self.locate_side(c1, c2)[0] != (c1, opposite):
             rotations += self.rotate_face(opposite)
 
-        # print(self)
         self.faces[c1].set_as_top(opposite)
         if self.faces[c1].location[3] == c2:
             rotations += self.rotate_face(opposite, CLC=1)
@@ -268,6 +294,11 @@ class Solution(Rubiks_Cube):
         return rotations
 
     def Top_cross(self, colour):
+        ''' creates a top cross on a rubiks cube opposite of colour
+        ie white means make a yellow cross.
+        we will accomplish this through the beginner method to form the top cross 
+        based of the 3 combinations a single dot a line and a L shape
+        '''
         self.faces[self.faces[colour].location[0]].set_as_bottom(colour)
         opposite = self.faces[self.faces[colour].location[0]].location[0]
         steps, rotations = 0, []
@@ -335,6 +366,7 @@ class Solution(Rubiks_Cube):
         return rotations
 
     def check_l_shape(self, colour, location):
+        """helper method to check the shape is an l"""
         spots = [(0, 1), (1, 2), (2, 3), (3, 0)]
         loc = self.faces[colour].location
         for x1, x2 in spots:
@@ -344,6 +376,8 @@ class Solution(Rubiks_Cube):
         return False
 
     def Top_corners(self, colour):
+        ''' rotates the top corners of the cube like the beginner method
+        so each corner is in the correct position just twisted'''
         self.faces[self.faces[colour].location[0]].set_as_bottom(colour)
         opposite = self.faces[self.faces[colour].location[0]].location[0]
         rotations = []
@@ -416,11 +450,13 @@ class Solution(Rubiks_Cube):
                     count -= 1
 
                 rotations += self.rotate(flip, save, 0)
-
         return rotations
 
 
     def count_corners(self, side1, side2, opposite):
+        '''counts the number of correct corners in the right position
+        may or may not be twisted
+        '''
         count = []
         for c1, c2 in zip(side1, side2):
             if all(map(lambda x: x in {c1, c2, opposite}, \
@@ -429,6 +465,9 @@ class Solution(Rubiks_Cube):
         return count
 
     def Invert(self, colour):
+        ''' twists each of the corner piece so that yellow is facing up
+        may need to rotate the opposite face a few times to realign
+        '''
         self.faces[self.faces[colour].location[0]].set_as_bottom(colour)
         opposite = self.faces[self.faces[colour].location[0]].location[0]
         sides = [i for i in self.locate_corner(opposite) if i[0] != opposite]
@@ -465,6 +504,8 @@ class Solution(Rubiks_Cube):
 
 
     def Final_Solve(self, colour):
+        '''does the final solve using 1 right alg 1 left alg 5 right and 5 left
+        on the correct face'''
         rotations = []
         self.faces[self.faces[colour].location[0]].set_as_bottom(colour)
         opposite = self.faces[self.faces[colour].location[0]].location[0]
@@ -564,7 +605,7 @@ class Solution(Rubiks_Cube):
         faces = self.copy()
         total = float('inf')
         rotations = []
-        for colour in 'RGYOBW':
+        for colour in 'W': #'RGYOBW':
             curr_rot = []
             curr_rot += self.Cross(colour)
             curr_rot += self.Corners(colour)
@@ -585,14 +626,15 @@ class Solution(Rubiks_Cube):
 
 if __name__ == '__main__':
     import time
+    solves = 1
     start = time.time()
     cube = Solution()
     total, steps = [], 0
-    for i in range(1000):
+    for i in range(solves):
         cube.Scramble()
         total += cube.Solve()
         for colour in 'RGWYBO':
             assert cube._Solved_face(colour)
 
-    print(len(total) // 1000)
-    print(f'6000 combinations solved in {time.time() - start}')
+    print(len(total) // solves)
+    print(f'{solves} combinations solved in {time.time() - start}')

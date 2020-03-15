@@ -6,6 +6,7 @@ import random
 
 class Face(object):
     def __init__(self, top, right, bottom, left, colour, items=False):
+        # you should not touch these variables
         self.location = deque([top, right, bottom, left])
         self.colour = colour
         if items:
@@ -67,6 +68,7 @@ class Face(object):
         return Face(*self.location, self.colour, [i[:] for i in self.grid])
 
 class Rubiks_Cube(object):
+    '''use this class for rubiks rotations'''
     def __init__(self, items: List[Face]=None):
         if items:
             self.faces = {}
